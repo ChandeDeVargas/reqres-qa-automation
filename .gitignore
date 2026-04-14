@@ -1,0 +1,32 @@
+# Environment — NEVER commit secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Pytest and test artifacts
+.pytest_cache/
+reports/
+allure-results/
+allure-report/
+.coverage
+htmlcov/
+
+# Playwright
+playwright/.auth/
+test-results/
+playwright-report/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store

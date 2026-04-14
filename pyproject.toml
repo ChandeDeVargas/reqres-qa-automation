@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "reqres-qa-automation"
+version = "1.0.0"
+description = "QA Automation project for ReqRes API — CRUD + Negative tests + Mocking"
+requires-python = ">=3.12"
+
+dependencies = [
+    "playwright>=1.44.0",
+    "pytest>=8.2.0",
+    "pytest-playwright>=0.5.0",
+    "pydantic>=2.7.0",
+    "python-dotenv>=1.0.0",
+    "pytest-html>=4.1.0",
+    "allure-pytest>=2.13.0",
+    "pytest-xdist>=3.5.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--html=reports/report.html",
+    "--self-contained-html",
+    "--strict-markers",
+]
+markers = [
+    "smoke: quick sanity checks",
+    "crud: full CRUD operations",
+    "negative: negative and edge case tests",
+    "mock: tests using Playwright route mocking",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
