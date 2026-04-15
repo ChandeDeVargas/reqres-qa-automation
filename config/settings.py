@@ -43,3 +43,4 @@ TEST_PASSWORD: str = _require("TEST_PASSWORD")
 
 # ── Reporting ─────────────────────────────────────────────────────────────────
 ALLURE_RESULTS_DIR: str = os.getenv("ALLURE_RESULTS_DIR", "allure-results")
+MOCK_API: bool = os.getenv("MOCK_API", "false").lower() == "true"

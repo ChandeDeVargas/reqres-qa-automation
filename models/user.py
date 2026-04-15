@@ -44,6 +44,7 @@ class UserListResponse(BaseModel):
     page: int
     per_page: int
     total: int
+    total_pages: int
     data: list[UserData]
     support: SupportInfo
 

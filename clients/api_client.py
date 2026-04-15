@@ -88,6 +88,10 @@ class ReqResClient:
         Core method — every public method delegates here.
         Times the full round-trip (not just parse time).
         """
+        if settings.MOCK_API:
+            from clients.api_mock import get_mock_response
+            return get_mock_response(method, path, params)
+
         url = self._build_url(path)
         kwargs: dict[str, Any] = {
             "timeout": settings.REQUEST_TIMEOUT_MS,
