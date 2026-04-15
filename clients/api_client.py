@@ -92,12 +92,20 @@ class ReqResClient:
         kwargs: dict[str, Any] = {
             "timeout": settings.REQUEST_TIMEOUT_MS,
         }
+
+        req_headers = {}
+        if settings.API_KEY:
+            req_headers["x-api-key"] = settings.API_KEY
+        if headers:
+            req_headers.update(headers)
+            
+        if req_headers:
+            kwargs["headers"] = req_headers
+
         if params:
             kwargs["params"] = params
         if data is not None:
             kwargs["data"] = data
-        if headers:
-            kwargs["headers"] = headers
 
         start = time.monotonic()
         raw = self._ctx.fetch(url, method=method, **kwargs)

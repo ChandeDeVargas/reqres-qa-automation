@@ -31,6 +31,7 @@ def _int(key: str, default: int) -> int:
 BASE_URL: str = _require("BASE_URL")
 API_PREFIX: str = os.getenv("API_PREFIX", "/api")
 BASE_API_URL: str = f"{BASE_URL}{API_PREFIX}"
+API_KEY: str = os.getenv("API_KEY", "")
 
 # ── Timeouts ─────────────────────────────────────────────────────────────────
 REQUEST_TIMEOUT_MS: int = _int("REQUEST_TIMEOUT_MS", 10_000)
