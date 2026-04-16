@@ -21,10 +21,10 @@ class TestSmoke:
     """Basic connectivity and setup validation"""
 
     def test_api_is_reachable(self, client):
-        """Get /users returns 200 (if auth key provided) or 401 (no key) - confirms API is reachable"""
+        """Get /users returns 200 (if auth key provided or mocked) or 401 (no key) - confirms API is reachable"""
         response = client.get("/users")
         from config import settings
-        expected_status = 200 if settings.API_KEY else 401
+        expected_status = 200 if (settings.API_KEY or settings.MOCK_API) else 401
         assert_status(response, expected_status)
 
     def test_response_time_within_sla(self, client):
@@ -42,7 +42,7 @@ class TestSmoke:
         """Response body matches the appropriate schema based on auth state"""
         response = client.get("/users")
         from config import settings
-        if settings.API_KEY:
+        if settings.API_KEY or settings.MOCK_API:
             model = assert_schema(response, UserListResponse)
             assert len(model.data) > 0, "Expected at least one user in the list"
         else:
