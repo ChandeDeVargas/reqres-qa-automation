@@ -90,7 +90,7 @@ class ReqResClient:
         """
         if settings.MOCK_API:
             from clients.api_mock import get_mock_response
-            return get_mock_response(method, path, params)
+            return get_mock_response(method, path, params, data)
 
         url = self._build_url(path)
         kwargs: dict[str, Any] = {
