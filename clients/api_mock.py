@@ -99,6 +99,12 @@ def get_mock_response(method: str, path: str, params: dict | None = None, data: 
                 return APIResponse(status=400, body={"error": "Missing email or username"}, headers={}, elapsed_ms=10.0)
             return APIResponse(status=200, body={"id": 4, "token": "QpwL5tke4Pnpja7X4"}, headers={}, elapsed_ms=15.0)
 
+    elif method.upper() in ("PUT", "PATCH"):
+        match = re.match(r"^users/(\d+)$", clean_path)
+        if match:
+            body = data.copy() if data else {}
+            body["updatedAt"] = datetime.datetime.now(datetime.UTC).isoformat().replace('+00:00', 'Z')
+            return APIResponse(status=200, body=body, headers={}, elapsed_ms=12.0)
 
     # Fallback mock for anything else
     return APIResponse(status=200, body={}, headers={}, elapsed_ms=5.0)
