@@ -106,5 +106,10 @@ def get_mock_response(method: str, path: str, params: dict | None = None, data: 
             body["updatedAt"] = datetime.datetime.now(datetime.UTC).isoformat().replace('+00:00', 'Z')
             return APIResponse(status=200, body=body, headers={}, elapsed_ms=12.0)
 
+    elif method.upper() == "DELETE":
+        match = re.match(r"^users/(\d+)$", clean_path)
+        if match:
+            return APIResponse(status=204, body=None, headers={}, elapsed_ms=10.0, raw_text="")
+
     # Fallback mock for anything else
     return APIResponse(status=200, body={}, headers={}, elapsed_ms=5.0)
