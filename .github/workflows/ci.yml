@@ -1,0 +1,120 @@
+name: ReqRes QA Automation
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: # allows manual trigger from GitHub UI
+
+# Cancel in-progress runs on the same branch when a new push arrives.
+# Prevents stale runs from consuming CI minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Run test suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false # run all matrix entries even if one fails
+      matrix:
+        python-version: ["3.12"]
+
+    steps:
+      # ── 1. Checkout ───────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Python ─────────────────────────────────────────────────────────
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      # ── 3. Dependencies ───────────────────────────────────────────────────
+      - name: Install Python dependencies
+        run: pip install -e ".[dev]"
+
+      # Playwright browsers are cached by their version hash so they're
+      # not re-downloaded on every run unless the Playwright version changes.
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
+
+      - name: Install Playwright browser (Chromium)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: playwright install chromium --with-deps
+
+      - name: Install Playwright system dependencies (cached hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: playwright install-deps chromium
+
+      # ── 4. Environment ────────────────────────────────────────────────────
+      # Secrets are set in GitHub → Settings → Secrets and variables → Actions.
+      # Never hardcode credentials here.
+      - name: Create .env from GitHub Secrets
+        run: |
+          cat > .env << EOF
+          BASE_URL=${{ vars.BASE_URL || 'https://reqres.in' }}
+          API_PREFIX=/api
+          REQUEST_TIMEOUT_MS=10000
+          MAX_RESPONSE_TIME_MS=3000
+          TEST_EMAIL=${{ secrets.TEST_EMAIL || 'eve.holt@reqres.in' }}
+          TEST_PASSWORD=${{ secrets.TEST_PASSWORD || 'cityslicka' }}
+          ALLURE_RESULTS_DIR=allure-results
+          EOF
+
+      # ── 5. Smoke tests ────────────────────────────────────────────────────
+      # Run smoke suite first — if the API is unreachable, fail fast
+      # before spending time on the full suite.
+      - name: Run smoke tests
+        run: pytest tests/test_smoke.py -m smoke -v --tb=short
+
+      # ── 6. Mock tests (no network needed) ────────────────────────────────
+      # Mock tests use a local HTTP server and always pass in any environment.
+      - name: Run mock tests (offline)
+        run: pytest tests/test_mock_errors.py -v --tb=short
+
+      # ── 7. Full suite ─────────────────────────────────────────────────────
+      - name: Run full test suite
+        run: |
+          pytest tests/ \
+            --tb=short \
+            --html=reports/report.html \
+            --self-contained-html \
+            -v
+        # Continue so we can upload the report even on test failures
+        continue-on-error: true
+
+      # ── 8. Upload HTML report ─────────────────────────────────────────────
+      - name: Upload HTML test report
+        uses: actions/upload-artifact@v4
+        if: always() # upload even if tests fail
+        with:
+          name: html-report-py${{ matrix.python-version }}
+          path: reports/report.html
+          retention-days: 14
+
+      # ── 9. Upload Allure results (for Allure Cloud / Pages) ───────────────
+      - name: Upload Allure results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-results-py${{ matrix.python-version }}
+          path: allure-results/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      # ── 10. Final gate ────────────────────────────────────────────────────
+      # Re-run pytest with --tb=no just to get a clean exit code.
+      # The full output is already in the artifact.
+      - name: Assert all tests passed
+        run: pytest tests/ --tb=no -q
