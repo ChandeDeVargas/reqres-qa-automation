@@ -76,6 +76,7 @@ jobs:
           TEST_EMAIL=${TEST_EMAIL:-eve.holt@reqres.in}
           TEST_PASSWORD=${TEST_PASSWORD:-cityslicka}
           ALLURE_RESULTS_DIR=allure-results
+          MOCK_API=true
           EOF
 
       # ── 5. Smoke tests ────────────────────────────────────────────────────
